@@ -2,7 +2,7 @@ import server from "./server";
 
 function Wallet({ address, setAddress, balance, setBalance }) {
   async function onChange(evt) {
-    const address = evt.target.value;
+    const { value: address } = evt.target;
     setAddress(address);
     if (address) {
       const {
@@ -19,8 +19,12 @@ function Wallet({ address, setAddress, balance, setBalance }) {
       <h1>Your Wallet</h1>
 
       <label>
-        Wallet Address
-        <input placeholder="Type an address, for example: 0x1" value={address} onChange={onChange}></input>
+        Public Address
+        <input
+          placeholder="Example: 0x04f7445960ce288b3eeddad94f37ae424a147237"
+          value={address}
+          onChange={onChange}
+        ></input>
       </label>
 
       <div className="balance">Balance: {balance}</div>

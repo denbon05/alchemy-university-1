@@ -1,5 +1,11 @@
 import { useState } from "react";
 import server from "./server";
+import * as secp from "ethereum-cryptography/secp256k1";
+import { utf8ToBytes, toHex } from "ethereum-cryptography/utils";
+console.log({ secp });
+// Client private key sample.
+const PRIVATE_KEY =
+  "a8559a8d9038a7ae17cf86f646ed44634465c03d0c2ea2b68a1018e0dc95f0df";
 
 function Transfer({ address, setBalance }) {
   const [sendAmount, setSendAmount] = useState("");
@@ -9,17 +15,28 @@ function Transfer({ address, setBalance }) {
 
   async function transfer(evt) {
     evt.preventDefault();
+    const transferData = {
+      amount: parseInt(sendAmount),
+      recipient,
+      sender: address,
+    };
+    const msgHash = toHex(utf8ToBytes(JSON.stringify(transferData)));
+    const [sigUint8Arr, recoveryNum] = await secp.sign(msgHash, PRIVATE_KEY, {
+      recovered: true,
+    });
 
     try {
       const {
         data: { balance },
       } = await server.post(`send`, {
-        sender: address,
-        amount: parseInt(sendAmount),
-        recipient,
+        ...transferData,
+        signature: toHex(sigUint8Arr),
+        recoveryNum,
+        msgHash,
       });
       setBalance(balance);
     } catch (ex) {
+      console.error(ex);
       alert(ex.response.data.message);
     }
   }
@@ -31,7 +48,7 @@ function Transfer({ address, setBalance }) {
       <label>
         Send Amount
         <input
-          placeholder="1, 2, 3..."
+          placeholder="Type amount"
           value={sendAmount}
           onChange={setValue(setSendAmount)}
         ></input>
